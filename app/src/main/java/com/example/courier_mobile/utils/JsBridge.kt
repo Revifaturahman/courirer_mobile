@@ -5,42 +5,53 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 
 class JsBridge(
-    private val web: WebView,
-    private val courierLng: Double,
-    private val courierLat: Double
+    private val web: WebView
 ) {
     companion object {
         private const val TAG = "JS_BRIDGE"
+        private var isOutside = false
+
+        var bufferPolygonJson: String? = null
     }
 
 
     @JavascriptInterface
     fun onBufferCreated(polygonJson: String) {
-        Log.d(TAG, "onBufferCreated() called")
-        Log.d(TAG, "polygonJson length = ${polygonJson.length}")
-        Log.d(TAG, "polygonJson = $polygonJson")
+        Log.d(TAG, "Polygon buffer READY, storing to memory...")
 
+        bufferPolygonJson = polygonJson   // simpan polygon
+    }
+
+    fun sendLocationToJs(lat: Double, lng: Double) {
         val js = """
-            try {
-                console.log('[Android] checkPointInside() courier=[$courierLng, $courierLat]');
-                console.log('[Android] polygon json length: ${polygonJson.length}');
-                checkPointInside([$courierLng, $courierLat], $polygonJson);
-            } catch(e) {
-                Android.onJsError('checkPointInside error: ' + e.message);
-            }
-        """
-
+        checkPointInside([$lng, $lat], window.bufferPolygon);
+    """
         web.post {
-            Log.d(TAG, "Evaluating JS for checkPointInside...")
             web.evaluateJavascript(js, null)
         }
     }
 
+
     @JavascriptInterface
     fun onPointCheck(result: String) {
         Log.d(TAG, "onPointCheck(): FINAL RESULT = $result")
+        Log.d(TAG, "onPointCheck(): FINAL RESULT = $result")
+
         if (result == "outside") {
-            FonnteHelper.sendAlert("Kurir A")
+
+            // Jika sebelumnya berada di dalam rute → sekarang keluar rute
+            if (!isOutside) {
+                FonnteHelper.sendAlert("Kurir A keluar rute!")
+                isOutside = true
+            }
+
+        } else {
+
+            // Jika sebelumnya berada di luar → sekarang masuk rute lagi
+            if (isOutside) {
+                FonnteHelper.sendAlert("Kurir A masuk rute kembali!")
+                isOutside = false
+            }
         }
     }
 

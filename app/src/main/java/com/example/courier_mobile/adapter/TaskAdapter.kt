@@ -54,9 +54,9 @@ class TaskAdapter(
         holder.btnStart.setOnClickListener {
             val context = holder.itemView.context
             val intent = Intent(context, DetailRouteActivity::class.java).apply {
-                putExtra("detail_id", delivery.id)
+                putExtra("detailId", delivery.id)
             }
-            Log.d("Button", "Klil ${delivery.id}")
+            Log.d("Button", "Klik ${delivery.id}")
             context.startActivity(intent)
         }
     }

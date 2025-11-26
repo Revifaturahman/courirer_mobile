@@ -69,12 +69,12 @@
             }
 
             // Auto-check courier position
-<!--            if (window.courierLat != null && window.courierLng != null) {-->
-<!--                console.log("[JS] Auto-checking courier inside polygon...");-->
-<!--                checkPointInside([window.courierLng, window.courierLat], window.bufferPolygon);-->
-<!--            } else {-->
-<!--                console.log("[JS] Courier position NOT SET → skipping auto-check.");-->
-<!--            }-->
+            if (window.courierLat != null && window.courierLng != null) {
+                console.log("[JS] Auto-checking courier inside polygon...");
+                checkPointInside([window.courierLng, window.courierLat], window.bufferPolygon);
+            } else {
+                console.log("[JS] Courier position NOT SET → skipping auto-check.");
+            }
 
         } catch (e) {
             Android.onJsError("makeBuffer error: " + e.message);
@@ -112,6 +112,10 @@
     // ============================================================
     // PANGGIL READY SETELAH SCRIPT BERES TERLOAD
     // ============================================================
-    onAndroidReady();
+    window.addEventListener("load", () => {
+        console.log("[JS] window load completed.");
+        onAndroidReady();
+    });
+
 
 </script>

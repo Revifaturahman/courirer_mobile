@@ -2,7 +2,6 @@ package com.example.courier_mobile.data.network
 
 import com.example.courier_mobile.data.model.GetDetailDelivery
 import com.example.courier_mobile.data.model.ResponseDelivery
-import com.example.courier_mobile.data.model.TrackingRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -26,12 +25,9 @@ interface ApiService {
     suspend fun getAllDeliveries(): Response<ResponseDelivery>
 
 
-    @GET("delivery-details/{detail}/startDelivery")
-    suspend fun GetDetailDelivery(
-        @Path("detail") detail: Int
+    @POST("material-details/{detail}/startDelivery")
+    suspend fun startDelivery(
+        @Path("detail") detailId: Int
     ): Response<GetDetailDelivery>
-
-    @POST("update-location")
-    suspend fun sendTrackingData(@Body body: TrackingRequest): Response<Any>
 
 }

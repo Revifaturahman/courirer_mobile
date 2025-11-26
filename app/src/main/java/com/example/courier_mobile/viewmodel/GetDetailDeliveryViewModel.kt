@@ -1,5 +1,6 @@
 package com.example.courier_mobile.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,14 +14,25 @@ import javax.inject.Inject
 @HiltViewModel
 class GetDetailDeliveryViewModel @Inject constructor(
     private val repository: GetDetailRepository
-): ViewModel() {
+) : ViewModel() {
+
     private val _resultData = MutableLiveData<GetDetailDelivery>()
     val resultData: LiveData<GetDetailDelivery> get() = _resultData
 
-    fun fetchData(detail: Int){
+    private val _errorMessage = MutableLiveData<String>()
+    val errorMessage: LiveData<String> get() = _errorMessage
+
+    fun fetchData(detailId: Int) {
         viewModelScope.launch {
-            val data = repository.getDetailDelivery(detail)
-            _resultData.value = data
+            try {
+                Log.d("GetDetailVM", "Fetching detail for id=$detailId")
+                val data = repository.getDetailDelivery(detailId)
+                Log.d("GetDetailVM", "Success: $data")
+                _resultData.value = data
+            } catch (e: Exception) {
+                Log.e("GetDetailVM", "Error: ${e.message}")
+                _errorMessage.value = e.message
+            }
         }
     }
 }
