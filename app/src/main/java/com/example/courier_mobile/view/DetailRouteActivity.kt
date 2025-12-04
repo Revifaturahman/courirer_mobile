@@ -1,206 +1,138 @@
 package com.example.courier_mobile.view
 
-import androidx.datastore.preferences.core.doublePreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.first
-import android.content.Context
-
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
-import android.webkit.WebView
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
-import com.example.courier_mobile.utils.JsBridge
-import com.example.courier_mobile.utils.LocationPreferences
-import com.example.courier_mobile.utils.LocationTracker
-import com.example.courier_mobile.utils.Route
-import com.example.courier_mobile.utils.WebViewHelper
+import com.example.courier_mobile.databinding.ActivityDetailRouteBinding
+import com.example.courier_mobile.services.GeofencingService
 import com.example.courier_mobile.viewmodel.GetDetailDeliveryViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-val Context.AppDataStore by preferencesDataStore(name = "location_prefs")
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.widget.Toast
+
 @AndroidEntryPoint
-
 class DetailRouteActivity : AppCompatActivity() {
 
-    private lateinit var webHelper: WebViewHelper
-    private lateinit var jsBridge: JsBridge
+    companion object {
+        private const val REQ_PERMS = 1001
+    }
 
-
-    private lateinit var tracker: LocationTracker
-    private lateinit var prefs: LocationPreferences
-
-
+    private val requiredPerms = mutableListOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ).apply {
+        // foreground service location only exists on API 34+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34 constant name
+            add(Manifest.permission.FOREGROUND_SERVICE_LOCATION)
+        }
+        // notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    private lateinit var binding: ActivityDetailRouteBinding
     private val viewModel: GetDetailDeliveryViewModel by viewModels()
 
-    private var pageLoaded = false
-    private val TAG = "DETAIL_ROUTE"
-    private val TAG_KORDINAT =  "KORDINAT"
+    private var destLat = 0.0
+    private var destLng = 0.0
+    private var workerName = ""
+    private var detailId = -1
+    private var polygonJson: String? = null
 
-    private var startLat: Double = 0.0
-    private var startLng: Double = 0.0
-
-    private var destLat: Double = 0.0
-    private var destLng: Double = 0.0
-
-    private var courierLat: Double = 0.0
-    private var courierLng: Double = 0.0
-
-
-
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityDetailRouteBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        webHelper = WebViewHelper(this) { onPageLoaded() }
+        Log.d("DetailRouteDebug", "onCreate START")
 
-        val web = webHelper.initWebView()
+        setupToolbar()
 
-        // ONLY ONCE
-        jsBridge = JsBridge(web)
-        web.addJavascriptInterface(jsBridge, "Android")
+        detailId = intent.getIntExtra("detailId", -1)
+        Log.d("DetailRouteDebug", "Received detailId = $detailId")
 
-        // Load HTML FIRST
-        web.loadUrl("file:///android_asset/turf.html")
-
-        setContentView(web)
-
-        val detailId = intent.getIntExtra("detailId", -1)
-        Log.d("detailId", "id: ${detailId}")
-
-        if (detailId != -1){
+        if (detailId != -1) {
+            Log.d("DetailRouteDebug", "Calling viewModel.fetchData()...")
             viewModel.fetchData(detailId)
+        } else {
+            Log.e("DetailRouteDebug", "ERROR: detailId = -1 (INVALID)")
         }
 
-        viewModel.resultData.observe(this){detail ->
-            Log.d(TAG_KORDINAT, "current_role:${detail.current_role}, name: ${detail.worker_name}, lat: ${detail.latitude}, long: ${detail.longitude}")
-
-            val workerLat = detail.latitude?.toDoubleOrNull()
-            val workerLng = detail.longitude?.toDoubleOrNull()
-
-            if (workerLat == null || workerLng == null) {
-                Log.e("DETAIL", "Invalid worker location from server")
-                return@observe
-            }
-
-            Log.d("DETAIL", "Worker = $workerLat , $workerLng")
-
-            destLat = workerLat
-            destLng = workerLng
-        }
-
-        prefs = LocationPreferences(this)
-
-        tracker = LocationTracker(this) { location ->
-
-//            Log.d("GPS_RAW", "Lat:${location.latitude}, Lng:${location.longitude}")
-
-            // Simpan ke DataStore
-            lifecycleScope.launch {
-                prefs.saveLocation(location.latitude, location.longitude)
-            }
-        }
-
-        // Set observer untuk baca data store
-        lifecycleScope.launch {
-            prefs.lastLocation.collect { (lat, lng) ->
-                val safeLat = lat ?: return@collect
-                val safeLng = lng ?: return@collect
-
-                // 🔥 FIX PENTING!
-                if (startLat == 0.0 && startLng == 0.0) {
-                    startLat = safeLat
-                    startLng = safeLng
-                    Log.d("ROUTE", "Start position initialized: $startLat , $startLng")
-                }
-
-                courierLat = safeLat
-                courierLng = safeLng
-
-                Log.d("JS_UPDATE", "Sending realtime courier position: $safeLat , $safeLng")
-
-                if (JsBridge.bufferPolygonJson != null) {
-                    jsBridge.sendLocationToJs(safeLat, safeLng)
-                }
-            }
-        }
-
-
-
-        webHelper.webView.webChromeClient = object : WebChromeClient() {
-            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                Log.d("WEBVIEW_JS", "JS Console: ${consoleMessage?.message()} (line ${consoleMessage?.lineNumber()})")
-                return true
-            }
-        }
+        observeDetail()
+        setupButton()
+        ensurePermissions()
     }
 
-    private fun onPageLoaded() {
-        pageLoaded = true
-        Log.d(TAG, "Page fully loaded.")
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbarDetail)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.toolbarDetail.setNavigationOnClickListener { finish() }
+    }
 
-        lifecycleScope.launch {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun observeDetail() {
+        viewModel.resultData.observe(this) { detail ->
 
-            Log.d("START_AND_DEST", "startlat: $startLat, startlng: $startLng, destlat: $destLat, destlng: $destLng")
-            Log.d("DEBUGKURIR", "Sending to JS: $courierLat , $courierLng")
+            Log.d("DetailRouteDebug", "observeDetail TRIGGERED with data = $detail")
 
-            // 🔥 KIRIM KOORDINAT KURIR YANG SUDAH VALID
-            Log.d("DEBUG_JS_SEND", "Sending to JS -> lat: $courierLng , lng: $courierLat")
+            workerName = detail.worker_name ?: "-"
+            destLat = detail.latitude?.toDoubleOrNull() ?: 0.0
+            destLng = detail.longitude?.toDoubleOrNull() ?: 0.0
 
-            val js = """
-                setCourierPosition($courierLng, $courierLat);
-                if (window.bufferPolygon) {
-                    checkPointInside([$courierLng, $courierLat], window.bufferPolygon);
-                }
-            """.trimIndent()
-            webHelper.webView.evaluateJavascript(js) { result ->
-                Log.d("DEBUG_JS_CALLBACK", "JS response: $result")
-            }
+            Log.d("DetailRouteDebug", "Parsed workerName=$workerName lat=$destLat lng=$destLng")
 
-            // Ambil rute OSRM
-            val route = Route.fetchOsrmRouteGeoJson(
-                startLng, startLat,
-                destLng, destLat
-            )
-
-            if (route != null) {
-                withContext(Dispatchers.Main) {
-                    sendRouteToJs(route)
-                }
-            }
+            binding.textWorkerName.text = workerName
+            binding.textWorkerRole.text = detail.current_role ?: "-"
+            binding.textWorkerAddress.text = "Lat: $destLat , Lng: $destLng"
         }
     }
 
 
-    private fun sendRouteToJs(lineJson: String) {
-        if (!pageLoaded) return
-
-        val js = """
-            console.log("Android -> makeBuffer called");
-            window.__line = $lineJson;
-            makeBuffer(window.__line, 0.1);
-        """
-
-        webHelper.webView.evaluateJavascript(js, null)
+    private fun setupButton() {
+        binding.btnViewRoute.setOnClickListener {
+            Log.d("DetailRouteDebug", "Opening RouteMapActivity...")
+            val intent = Intent(this, RouteMapActivity::class.java)
+            intent.putExtra("destLat", destLat)
+            intent.putExtra("destLng", destLng)
+            intent.putExtra("workerName", workerName)
+            intent.putExtra("detailId", detailId)
+            startActivity(intent)
+        }
     }
 
-    override fun onStart() {
-        super.onStart()
-        tracker.startLocationUpdates()
-    }
 
-    override fun onStop() {
-        super.onStop()
-        tracker.stopLocationUpdates()
+
+    private fun ensurePermissions() {
+        val missing = requiredPerms.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missing.toTypedArray(), REQ_PERMS)
+        } else {
+            // already granted — nothing to do here
+            Log.d("DetailRouteDebug", "All required permissions already granted")
+        }
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_PERMS) {
+            val denied = permissions.zip(grantResults.toTypedArray()).filter { it.second != PackageManager.PERMISSION_GRANTED }
+            if (denied.isNotEmpty()) {
+                Log.w("DetailRouteDebug", "Permissions denied: ${denied.map { it.first }}")
+                Toast.makeText(this, "Permission lokasi diperlukan untuk tracking.", Toast.LENGTH_LONG).show()
+                // optionally: disable start or show prompt
+            } else {
+                Log.d("DetailRouteDebug", "Permissions granted")
+            }
+        }
     }
 }

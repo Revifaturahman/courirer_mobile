@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import android.util.Log
+import org.maplibre.android.geometry.LatLng
 
 object Route {
     private val client = OkHttpClient()
@@ -20,7 +21,7 @@ object Route {
         destLng: Double, destLat: Double
     ): String? = withContext(Dispatchers.IO) {
         try {
-            val url = "https://router.project-osrm.org/route/v1/driving/$startLng,$startLat;$destLng,$destLat?geometries=geojson&overview=full"
+            val url = "https://router.project-osrm.org/route/v1/driving/$startLng,$startLat;$destLng,$destLat?geometries=geojson&overview=full&steps=true"
             Log.d(TAG, "OSRM URL = $url")
 
             val request = Request.Builder().url(url).build()
@@ -55,4 +56,21 @@ object Route {
             return@withContext null
         }
     }
+
+    fun parseGeoJsonToLatLng(lineJson: String): List<LatLng> {
+        val list = mutableListOf<LatLng>()
+
+        val json = JSONObject(lineJson)
+        val coords = json.getJSONArray("coordinates")
+
+        for (i in 0 until coords.length()) {
+            val point = coords.getJSONArray(i)
+            val lng = point.getDouble(0)
+            val lat = point.getDouble(1)
+            list.add(LatLng(lat, lng))
+        }
+
+        return list
+    }
+
 }

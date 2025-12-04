@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>turf helper</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!--    <script src="file:///android_asset/turf.min.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+</head>
+<body>
+
+<!-- ERROR CATCHER WAJIB DIATAS -->
+<script>
+    window.onerror = function(msg, src, line, col, err) {
+        if (Android && Android.onJsError) {
+            Android.onJsError("JS ERROR: " + msg + " src=" + src + " line=" + line);
+        }
+        return false;
+    };
+</script>
+
+<script>
+    console.log("TURF HTML LOADED");
+
+    window.bufferPolygon = null;
+    window.courierLat = null;
+    window.courierLng = null;
+
+    window.addEventListener("load", function () {
+      console.log("[JS] load -> Android.onJsReady()");
+      if (typeof Android !== "undefined" && Android.onJsReady) {
+        Android.onJsReady("ready");
+      }
+    });
+
+    function setCourierPosition(lng, lat) {
+      window.courierLng = lng;
+      window.courierLat = lat;
+      console.log("[JS] Courier SET", lat, lng);
+    }
+
+    function makeBuffer(lineGeoJson, km) {
+      console.log("[JS] makeBuffer CALLED");
+      try {
+        if (typeof lineGeoJson === "string") {
+          lineGeoJson = JSON.parse(lineGeoJson);
+        }
+
+        const feature = (lineGeoJson.type === "Feature")
+            ? lineGeoJson
+            : turf.feature({ type: "LineString", coordinates: lineGeoJson.coordinates });
+
+        const simplified = turf.simplify(feature, { tolerance: 0.0001, highQuality: false });
+        const buffered = turf.buffer(simplified, km, { units: "kilometers" });
+
+        window.bufferPolygon = buffered;
+        if (Android && Android.onBufferCreated) {
+          Android.onBufferCreated(JSON.stringify(buffered));
+        }
+
+        if (window.courierLat !== null) {
+          checkPointInside([window.courierLng, window.courierLat], buffered);
+        }
+
+      } catch (e) {
+        console.error("[JS] makeBuffer ERROR", e);
+        if (Android && Android.onJsError) Android.onJsError("makeBuffer ERROR: " + e.message);
+      }
+    }
+
+    function checkPointInside(pointArr, polygonObj) {
+      try {
+        const pt = turf.point(pointArr);
+        const inside = turf.booleanPointInPolygon(pt, polygonObj);
+        if (Android && Android.onPointCheck) Android.onPointCheck(inside ? "inside" : "outside");
+      } catch (e) {
+        console.error("[JS] checkPointInside ERROR", e);
+        if (Android && Android.onJsError) Android.onJsError("checkPointInside ERROR: " + e.message);
+      }
+    }
+</script>
+
+</body>
+</html>

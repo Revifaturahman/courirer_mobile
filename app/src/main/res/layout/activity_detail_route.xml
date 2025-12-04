@@ -1,56 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:maplibre="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Map View -->
-    <org.maplibre.android.maps.MapView
-        android:id="@+id/mapView"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarDetail"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="?attr/actionBarSize"
+        app:title="Detail Pengiriman"
+        app:navigationIcon="@drawable/arrow" />
 
-    <!-- Overlay for info (optional) -->
-    <LinearLayout
-        android:id="@+id/infoContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_gravity="top"
-        android:background="@drawable/bg_gradient_overlay"
-        android:visibility="visible">
-
-        <TextView
-            android:id="@+id/textRouteInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Detail Rute Pengantaran"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"/>
-
-        <TextView
-            android:id="@+id/textSubInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Memuat data rute..."
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Floating Action Button (fokus kamera ke start route) -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabFocus"
+    <TextView
+        android:id="@+id/textWorkerName"
+        android:text="Nama Worker"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="20dp"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textWorkerRole"
+        android:text="Role Worker"
+        android:textSize="16sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textWorkerAddress"
+        android:text="Alamat worker"
+        android:layout_marginBottom="30dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnViewRoute"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/arrow"
-        android:contentDescription="Fokus ke posisi awal"
-        app:tint="@android:color/white"
-        app:layout_anchorGravity="bottom|end"
-        android:layout_margin="16dp"
-        android:layout_gravity="bottom|end"/>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        android:text="Lihat Rute ke Lokasi" />
+
+</LinearLayout>

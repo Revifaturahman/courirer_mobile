@@ -9,16 +9,29 @@ import java.io.IOException
 object FonnteHelper {
 
     private val client = OkHttpClient()
-
-    // TOKEN kamu
     private const val API_TOKEN = "1LSTTVeLyTBKuNQqGZJq"
 
-    fun sendAlert(courierName: String) {
+    // --- 1. KURIR KELUAR RUTE ---
+    fun sendExitAlert(courierName: String) {
+        sendFonnteMessage(
+            "⚠️ Kurir $courierName keluar dari rute!"
+        )
+    }
+
+    // --- 2. KURIR KEMBALI MASUK RUTE ---
+    fun sendBackAlert(courierName: String) {
+        sendFonnteMessage(
+            "✅ Kurir $courierName kembali ke dalam rute."
+        )
+    }
+
+    // --- COMMON FUNCTION ---
+    private fun sendFonnteMessage(msg: String) {
 
         val json = """
             {
               "target": "6288210951173",
-              "message": "⚠️ Kurir $courierName keluar dari rute!"
+              "message": "$msg"
             }
         """.trimIndent()
 
@@ -43,3 +56,4 @@ object FonnteHelper {
         })
     }
 }
+
