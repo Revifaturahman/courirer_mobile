@@ -16,10 +16,16 @@ import com.example.courier_mobile.view.UpdateResultBottomSheet
 
 class UpdateResultAdapter(
     private var deliveries: List<ResultDelivery>,
-    private val activity: FragmentActivity
+    private val activity: FragmentActivity,
+    private var onSubmit: ((Int, String, Map<String, Int>) -> Unit)? = null
 ) : RecyclerView.Adapter<UpdateResultAdapter.TaskViewHolder>() {
 
+    init {
+        Log.d("UR_ADAPTER", "Adapter created. Items = ${deliveries.size}")
+    }
+
     fun updateData(newDeliveries: List<ResultDelivery>) {
+        Log.d("UR_ADAPTER", "updateData() called. New size = ${newDeliveries.size}")
         deliveries = newDeliveries
         notifyDataSetChanged()
     }
@@ -32,50 +38,77 @@ class UpdateResultAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
+        Log.d("UR_ADAPTER", "onCreateViewHolder() dipanggil")
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_task, parent, false)
         return TaskViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
+        Log.d("UR_ADAPTER", "onBindViewHolder() position = $position")
+
         val delivery = deliveries[position]
+
+        Log.d("UR_ADAPTER", "Bind delivery → id=${delivery.id}, worker=${delivery.worker_name}")
 
         holder.tvWorker.text = "Pekerja: ${delivery.worker_name ?: "-"}"
         holder.tvDate.text   = "Tanggal: ${delivery.delivery_date ?: "-"}"
 
-        val productListText = delivery.product_type?.joinToString("\n") { product ->
-            "${product.product_type} — ${product.weight} kg"
+        val productListText = delivery.product_type?.joinToString("\n") {
+            "${it.product_type} — ${it.weight} kg"
         } ?: "-"
 
         holder.tvProduct.text = productListText
 
         holder.btnStart.setOnClickListener {
+
+            Log.d("UR_ADAPTER", "btnStart CLICKED — preparing BottomSheet")
             val activity = holder.itemView.context as AppCompatActivity
 
-            // 🔥🔥🔥 **PASANG DI SINI (Tepat sebelum memanggil BottomSheet)** 🔥🔥🔥
+            // Product types
             val productTypes = ArrayList<String>().apply {
                 delivery.product_type?.forEach {
                     add(it.product_type ?: "")
-
                 }
             }
 
+            Log.d("UR_ADAPTER", "productTypes = $productTypes")
+
             val processDate = delivery.delivery_date ?: ""
+            Log.d("UR_ADAPTER", "processDate = $processDate")
 
-            // Setelah itu baru panggil bottom sheet
-            val bottomSheet = UpdateResultBottomSheet.newInstance(
-                delivery.id ?: 0,
-                delivery.worker_role,
-                delivery.worker_id,
-                delivery.status,
-                productTypes,
-                processDate
-            )
+            try {
+                val bottomSheet = UpdateResultBottomSheet.newInstance(
+                    delivery.id ?: 0,
+                    delivery.worker_role,
+                    delivery.worker_id,
+                    delivery.status,
+                    productTypes,
+                    processDate
+                )
 
-            bottomSheet.show(activity.supportFragmentManager, "UpdateResultBottomSheet")
+                Log.d("UR_ADAPTER", "BottomSheet created OK")
+
+                bottomSheet.setOnSubmitListener { detailId, processDate, results ->
+                    Log.d("UR_ADAPTER", "onSubmitListener → detailId=$detailId, processDate=$processDate")
+                    Log.d("UR_ADAPTER", "results = $results")
+                    onSubmit?.invoke(detailId, processDate, results)
+                }
+
+                Log.d("UR_ADAPTER", "Listener SET → showing bottom sheet")
+
+                bottomSheet.show(activity.supportFragmentManager, "UpdateResultBottomSheet")
+                Log.d("UR_ADAPTER", "BottomSheet.show() OK")
+
+            } catch (e: Exception) {
+                Log.e("UR_ADAPTER", "ERROR saat buka BottomSheet → ${e.message}")
+            }
         }
     }
 
-
-    override fun getItemCount(): Int = deliveries.size
+    override fun getItemCount(): Int {
+        Log.d("UR_ADAPTER", "getItemCount() = ${deliveries.size}")
+        return deliveries.size
+    }
 }
+

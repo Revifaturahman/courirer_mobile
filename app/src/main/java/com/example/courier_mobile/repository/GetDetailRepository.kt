@@ -59,14 +59,34 @@ class GetDetailRepository @Inject constructor(
         body: UpdateResultRequest
     ): Result<ApiResponse> {
         return try {
+            Log.d("UpdateResultRepo", "Sending updateResult... detailId=$detailId")
+            Log.d("UpdateResultRepo", "Request Body: $body")
+
             val response = api.updateResult(detailId, body)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(Exception("Update failed"))
+
+            // Log HTTP status
+            Log.d("UpdateResultRepo", "Response Code: ${response.code()}")
+            Log.d("UpdateResultRepo", "Response Message: ${response.message()}")
+
+            // Ambil raw JSON
+            val rawError = response.errorBody()?.string()
+            if (rawError != null) {
+                Log.e("UpdateResultRepo", "Error Body: $rawError")
             }
+
+            val rawBody = response.body()
+            Log.d("UpdateResultRepo", "Success Body: $rawBody")
+
+            if (response.isSuccessful && rawBody != null) {
+                Result.success(rawBody)
+            } else {
+                Result.failure(Exception("Update failed: HTTP ${response.code()}"))
+            }
+
         } catch (e: Exception) {
+            Log.e("UpdateResultRepo", "Exception: ${e.message}")
             Result.failure(e)
         }
     }
+
 }

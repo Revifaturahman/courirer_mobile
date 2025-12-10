@@ -20,7 +20,8 @@ class UpdateResultBottomSheet : BottomSheetDialogFragment() {
 
     private var processDate: String = ""
     private var productTypes: List<String> = emptyList<String>()
-    private var onSubmit: ((String, Map<String, Int>) -> Unit)? = null
+    private var onSubmit: ((Int, String, Map<String, Int>) -> Unit)? = null
+
 
     private var detailId: Int = 0
     private var role: String? = null
@@ -56,14 +57,18 @@ class UpdateResultBottomSheet : BottomSheetDialogFragment() {
 
         binding.btnSubmit.setOnClickListener {
             val results = adapter.getResults()
-            onSubmit?.invoke(processDate, results)
+            onSubmit?.invoke(detailId, processDate, results)
             dismiss()
         }
+
     }
 
-    fun setOnSubmitListener(listener: (String, Map<String, Int>) -> Unit) {
+    fun setOnSubmitListener(listener: (Int, String, Map<String, Int>) -> Unit) {
         onSubmit = listener
     }
+
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

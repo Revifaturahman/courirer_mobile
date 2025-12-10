@@ -1,14 +1,23 @@
 package com.example.courier_mobile.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class UpdateResultRequest(
-    val process_date: String,
+    @SerializedName("process_date")
+    val processDate: String,
+
+    @SerializedName("results")
     val results: List<UpdateResult>
 )
 
 data class UpdateResult(
+    @SerializedName("product_type")
     val productType: String,
-    var pcsFinished: Int? = null
+
+    @SerializedName("pcs_finished")
+    val pcsFinished: Int
 )
+
 
 data class ApiResponse(
     val success: Boolean,

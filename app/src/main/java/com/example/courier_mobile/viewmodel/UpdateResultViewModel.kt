@@ -7,9 +7,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.courier_mobile.data.model.ApiResponse
 import com.example.courier_mobile.data.model.UpdateResultRequest
 import com.example.courier_mobile.repository.GetDetailRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UpdateResultViewModel(
+@HiltViewModel
+class UpdateResultViewModel @Inject constructor(
     private val repository: GetDetailRepository
 ) : ViewModel() {
 
