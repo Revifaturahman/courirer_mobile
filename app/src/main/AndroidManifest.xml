@@ -22,6 +22,9 @@
         android:theme="@style/Theme.Courier_mobile"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".view.UpdateResultActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.RouteMapActivity"
             android:exported="false" />
         <activity
@@ -46,12 +49,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".services.GeofencingService"
             android:exported="false"
             android:foregroundServiceType="location"
             tools:ignore="ForegroundServicePermission,MissingClass" />
-
     </application>
 
 </manifest>

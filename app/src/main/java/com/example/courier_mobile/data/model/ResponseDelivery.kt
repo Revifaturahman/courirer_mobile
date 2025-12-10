@@ -22,6 +22,9 @@ data class ResultDelivery(
     @field:SerializedName("worker_id")
     val worker_id: Int ?= null,
 
+    @field:SerializedName("worker_role")
+    val worker_role: String ?= null,
+
     @field:SerializedName("product_type")
     val product_type: List<ProductType> ?= null,
 

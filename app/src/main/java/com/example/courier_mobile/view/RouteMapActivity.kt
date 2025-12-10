@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.webkit.WebView
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +24,7 @@ import com.example.courier_mobile.utils.WebViewHelper
 import com.example.courier_mobile.utils.LocationTracker
 import com.example.courier_mobile.utils.MapHelper
 import com.example.courier_mobile.utils.Route
+import com.example.courier_mobile.viewmodel.GetDetailArriveViewModel
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -53,10 +55,15 @@ class RouteMapActivity : AppCompatActivity() {
     private val routeLatLngs = mutableListOf<LatLng>()
     private val mapHelper = MapHelper()
 
+    private val viewModel: GetDetailArriveViewModel by viewModels()
+
     private var destLat = 0.0
     private var destLng = 0.0
     private var workerName = ""
     private var detailId = -1
+    private var role: String = ""
+    private var status: String = ""
+    private var workerId: Int = 0
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @RequiresApi(Build.VERSION_CODES.O)
@@ -132,13 +139,39 @@ class RouteMapActivity : AppCompatActivity() {
         destLng = intent.getDoubleExtra("destLng", 0.0)
         workerName = intent.getStringExtra("workerName") ?: "-"
         detailId = intent.getIntExtra("detailId", -1)
+        role = intent.getStringExtra("role").toString()
+        status = intent.getStringExtra("status").toString()
+        workerId = intent.getIntExtra("workerId", 0)
 
-        Log.i(DEBUG, "Intent received → ($destLat, $destLng) worker=$workerName detailId=$detailId")
+        Log.i(DEBUG, "Intent received → ($destLat, $destLng) worker=$workerName detailId=$detailId role=$role workerId=$workerId")
 
         // 4. SETUP TOOLBAR & LOCATION
+        observeArrive()
         setupToolbar()
         initLocationTracker()
         getInitialCourierLocation()
+    }
+
+    private fun observeArrive() {
+        val detailId = intent.getIntExtra("detailId", -1)
+        Log.d("DetailRouteDebug", "Received detailId = $detailId")
+        viewModel.fetchData(detailId)
+
+        viewModel.resultData.observe(this) { detail ->
+
+            // Set tombol setelah data siap
+            binding.btnArrive.setOnClickListener {
+                Log.d("RouteMap123", "Opening Detail...")
+
+                val intent = Intent(this, UpdateResultActivity::class.java)
+                intent.putExtra("detailId", detailId)
+                intent.putExtra("workerId", workerId)
+                intent.putExtra("role", role)
+                intent.putExtra("status", status)
+
+                startActivity(intent)
+            }
+        }
     }
 
 

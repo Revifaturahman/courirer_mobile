@@ -21,10 +21,15 @@ class GetAllDeliveryViewModel @Inject constructor(
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> get() = _errorMessage
 
-    fun fetchData() {
+    fun fetchData(status: String? = null, role: String ?= null, workerId: Int ?= null) {
         viewModelScope.launch {
             try {
-                val data = repository.getAllDelivery()
+                val data = repository.getAllDelivery(
+                    status = status,
+                    role = role,
+                    workerId = workerId
+                )
+
                 _resultData.value = data
             } catch (e: Exception) {
                 _errorMessage.value = e.message

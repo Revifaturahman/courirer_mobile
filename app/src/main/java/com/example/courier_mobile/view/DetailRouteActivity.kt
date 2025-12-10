@@ -45,7 +45,9 @@ class DetailRouteActivity : AppCompatActivity() {
     private var destLng = 0.0
     private var workerName = ""
     private var detailId = -1
-    private var polygonJson: String? = null
+    private var role: String = ""
+    private var status: String = ""
+    private var workerId: Int = 0
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,8 +59,16 @@ class DetailRouteActivity : AppCompatActivity() {
 
         setupToolbar()
 
+
         detailId = intent.getIntExtra("detailId", -1)
+        role = intent.getStringExtra("role").toString()
+        status = intent.getStringExtra("status").toString()
+        workerId = intent.getIntExtra("worker_id", 0)
+
         Log.d("DetailRouteDebug", "Received detailId = $detailId")
+        Log.d("DetailRouteDebug", "Received role = $role")
+        Log.d("DetailRouteDebug", "Received workerId = $workerId")
+        Log.d("DetailRouteDebug", "Received workerId = $status")
 
         if (detailId != -1) {
             Log.d("DetailRouteDebug", "Calling viewModel.fetchData()...")
@@ -105,6 +115,9 @@ class DetailRouteActivity : AppCompatActivity() {
             intent.putExtra("destLng", destLng)
             intent.putExtra("workerName", workerName)
             intent.putExtra("detailId", detailId)
+            intent.putExtra("workerId", workerId)
+            intent.putExtra("role", role)
+            intent.putExtra("status", status)
             startActivity(intent)
         }
     }

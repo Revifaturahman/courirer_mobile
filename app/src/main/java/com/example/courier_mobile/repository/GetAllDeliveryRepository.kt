@@ -7,15 +7,23 @@ import javax.inject.Inject
 class GetAllDeliveryRepository @Inject constructor(
     private val apiService: ApiService
 ) {
-    suspend fun getAllDelivery(): List<ResultDelivery> {
-        val response = apiService.getAllDeliveries()
+    suspend fun getAllDelivery(
+        status: String? = null,
+        role: String? = null,
+        workerId: Int? = null
+    ): List<ResultDelivery> {
+
+        val response = apiService.getAllDeliveries(
+            status = status,
+            role = role,
+            workerId = workerId
+        )
 
         if (response.isSuccessful) {
-            val body = response.body()
-
-            return body?.deliveries ?: emptyList()
+            return response.body()?.deliveries ?: emptyList()
         }
 
         throw Exception("Failed: ${response.code()} - ${response.message()}")
     }
 }
+

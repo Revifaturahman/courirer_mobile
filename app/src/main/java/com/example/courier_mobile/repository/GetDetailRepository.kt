@@ -1,7 +1,11 @@
 package com.example.courier_mobile.repository
 
 import android.util.Log
+import com.example.courier_mobile.data.model.ApiResponse
+import com.example.courier_mobile.data.model.GetDetailArrive
 import com.example.courier_mobile.data.model.GetDetailDelivery
+import com.example.courier_mobile.data.model.UpdateResult
+import com.example.courier_mobile.data.model.UpdateResultRequest
 import com.example.courier_mobile.data.network.ApiService
 import javax.inject.Inject
 
@@ -27,5 +31,42 @@ class GetDetailRepository @Inject constructor(
         }
 
         throw Exception("Failed: ${response.code()} - ${response.message()}")
+    }
+
+    suspend fun getDetailArrive(detailId: Int): GetDetailArrive{
+        Log.d("GetDetailRepo", "Request arriveDelivery detailId=$detailId")
+
+        val response = api.arriveDelivery(detailId)
+
+        // Log response code & message
+        Log.d("GetDetailRepo", "Response Code: ${response.code()}")
+        Log.d("GetDetailRepo", "Response Message: ${response.message()}")
+
+        // Log raw JSON response
+        Log.d("GetDetailRepo", "Raw Body: ${response.errorBody()?.string() ?: response.body()}")
+
+        if (response.isSuccessful) {
+            return response.body() ?: GetDetailArrive().also {
+                Log.e("GetDetailRepo", "Body null, returning empty model")
+            }
+        }
+
+        throw Exception("Failed: ${response.code()} - ${response.message()}")
+    }
+
+    suspend fun updateResult(
+        detailId: Int,
+        body: UpdateResultRequest
+    ): Result<ApiResponse> {
+        return try {
+            val response = api.updateResult(detailId, body)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Update failed"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

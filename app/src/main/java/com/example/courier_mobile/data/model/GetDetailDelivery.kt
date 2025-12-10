@@ -20,3 +20,14 @@ data class GetDetailDelivery(
     @field:SerializedName("longitude")
     val longitude: String ?= null,
 )
+
+data class GetDetailArrive(
+    @field:SerializedName("detail_id")
+    val detail_id: Int ?= null,
+
+    @field:SerializedName("status")
+    val status: String ?= null,
+
+    @field:SerializedName("current_role")
+    val current_role: String ?= null,
+)

@@ -6,16 +6,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.courier_mobile.R
-import com.example.courier_mobile.data.model.GetDetailDelivery
-import com.example.courier_mobile.data.model.ResponseDelivery
 import com.example.courier_mobile.data.model.ResultDelivery
 import com.example.courier_mobile.view.DetailRouteActivity
+import com.example.courier_mobile.view.UpdateResultBottomSheet
 
-class TaskAdapter(
-    private var deliveries: List<ResultDelivery>
-) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+class UpdateResultAdapter(
+    private var deliveries: List<ResultDelivery>,
+    private val activity: FragmentActivity
+) : RecyclerView.Adapter<UpdateResultAdapter.TaskViewHolder>() {
 
     fun updateData(newDeliveries: List<ResultDelivery>) {
         deliveries = newDeliveries
@@ -41,29 +43,39 @@ class TaskAdapter(
         holder.tvWorker.text = "Pekerja: ${delivery.worker_name ?: "-"}"
         holder.tvDate.text   = "Tanggal: ${delivery.delivery_date ?: "-"}"
 
-        // product_type is List<ProductType>
         val productListText = delivery.product_type?.joinToString("\n") { product ->
             "${product.product_type} — ${product.weight} kg"
         } ?: "-"
-//        val totalWeight  = delivery.product_type?.sumOf { it.weight?.toDoubleOrNull() ?: 0.0 } ?: 0.0
-
 
         holder.tvProduct.text = productListText
-//        holder.tvWeight.text  = "Total Berat: $totalWeight kg"
 
         holder.btnStart.setOnClickListener {
-            val context = holder.itemView.context
-            val intent = Intent(context, DetailRouteActivity::class.java).apply {
-                putExtra("detailId", delivery.id)
-                putExtra("role", delivery.worker_role )
-                putExtra("worker_id", delivery.worker_id )
-                putExtra("status", delivery.status )
+            val activity = holder.itemView.context as AppCompatActivity
+
+            // 🔥🔥🔥 **PASANG DI SINI (Tepat sebelum memanggil BottomSheet)** 🔥🔥🔥
+            val productTypes = ArrayList<String>().apply {
+                delivery.product_type?.forEach {
+                    add(it.product_type ?: "")
+
+                }
             }
-            Log.d("Button", "Klik ${delivery.id}")
-            context.startActivity(intent)
+
+            val processDate = delivery.delivery_date ?: ""
+
+            // Setelah itu baru panggil bottom sheet
+            val bottomSheet = UpdateResultBottomSheet.newInstance(
+                delivery.id ?: 0,
+                delivery.worker_role,
+                delivery.worker_id,
+                delivery.status,
+                productTypes,
+                processDate
+            )
+
+            bottomSheet.show(activity.supportFragmentManager, "UpdateResultBottomSheet")
         }
     }
 
+
     override fun getItemCount(): Int = deliveries.size
 }
-
