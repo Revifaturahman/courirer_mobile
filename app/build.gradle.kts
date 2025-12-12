@@ -42,8 +42,10 @@ android {
 }
 
 dependencies {
+
+    implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-    implementation("app.cash.quickjs:quickjs-android:0.9.2")
+//    implementation("app.cash.quickjs:quickjs-android:0.9.2")
 
     implementation("org.maplibre.gl:android-sdk:11.8.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")

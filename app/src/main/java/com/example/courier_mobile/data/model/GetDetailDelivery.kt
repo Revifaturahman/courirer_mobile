@@ -1,6 +1,9 @@
 package com.example.courier_mobile.data.model
 
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import kotlinx.parcelize.Parcelize
+
 data class GetDetailDelivery(
     @field:SerializedName("detail_id")
     val detail_id: Int ?= null,
@@ -31,3 +34,22 @@ data class GetDetailArrive(
     @field:SerializedName("current_role")
     val current_role: String ?= null,
 )
+
+data class GetNextRole(
+    @field:SerializedName("next_role")
+    val next_role: String ?= null,
+)
+
+data class GetWorkersResponse(
+    @field:SerializedName("workers")
+    val workers: List<GetWorkers> ?= null,
+)
+
+@Parcelize
+data class GetWorkers(
+    @field:SerializedName("id")
+    val id: Int ?= null,
+
+    @field:SerializedName("name")
+    val name: String ?= null,
+): Parcelable

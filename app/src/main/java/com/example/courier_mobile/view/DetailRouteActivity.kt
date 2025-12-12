@@ -8,8 +8,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.courier_mobile.databinding.ActivityDetailRouteBinding
-import com.example.courier_mobile.services.GeofencingService
-import com.example.courier_mobile.viewmodel.GetDetailDeliveryViewModel
+import com.example.courier_mobile.viewmodel.PostDetailDeliveryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 import android.content.pm.PackageManager
@@ -39,7 +38,7 @@ class DetailRouteActivity : AppCompatActivity() {
         }
     }
     private lateinit var binding: ActivityDetailRouteBinding
-    private val viewModel: GetDetailDeliveryViewModel by viewModels()
+    private val viewModel: PostDetailDeliveryViewModel by viewModels()
 
     private var destLat = 0.0
     private var destLng = 0.0

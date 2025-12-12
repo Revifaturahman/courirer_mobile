@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.courier_mobile.adapter.TaskAdapter
 import com.example.courier_mobile.databinding.FragmentTaskBinding
 import com.example.courier_mobile.viewmodel.GetAllDeliveryViewModel
-import com.example.courier_mobile.viewmodel.GetDetailDeliveryViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -38,7 +37,9 @@ class TaskFragment : Fragment() {
         adapter = TaskAdapter(emptyList())
         binding.rvDeliveries.adapter = adapter
 
-        viewModel.fetchData()
+        viewModel.fetchData(
+            status = "pending"
+        )
 
         viewModel.resultData.observe(viewLifecycleOwner) { data ->
             if (!data.isNullOrEmpty()) {

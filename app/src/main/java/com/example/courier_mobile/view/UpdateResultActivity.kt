@@ -1,5 +1,7 @@
 package com.example.courier_mobile.view
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -7,26 +9,35 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.courier_mobile.adapter.UpdateResultAdapter
+import com.example.courier_mobile.data.model.GetWorkers
+import com.example.courier_mobile.data.model.NextProcess
 import com.example.courier_mobile.data.model.UpdateResult
 import com.example.courier_mobile.data.model.UpdateResultRequest
 import com.example.courier_mobile.databinding.ActivityUpdateResultBinding
 import com.example.courier_mobile.viewmodel.GetAllDeliveryViewModel
+import com.example.courier_mobile.viewmodel.GetNextRoleAndGetWorkersViewModel
+import com.example.courier_mobile.viewmodel.PostNextProcessViewModel
 import com.example.courier_mobile.viewmodel.UpdateResultViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class UpdateResultActivity : AppCompatActivity() {
+class UpdateResultActivity : AppCompatActivity(), NextRoleBottomSheetFragment.OnWorkerSelectedListener {
 
     private lateinit var binding: ActivityUpdateResultBinding
     private lateinit var adapter: UpdateResultAdapter
 
     private val viewModelArrive: GetAllDeliveryViewModel by viewModels()
     private val updateResultViewModel: UpdateResultViewModel by viewModels()
+    private val getNextRole: GetNextRoleAndGetWorkersViewModel by viewModels()
+    private val getWorkers: GetNextRoleAndGetWorkersViewModel by viewModels()
+    private val nextProcessViewModel: PostNextProcessViewModel by viewModels()
 
     private var detailId: Int = -1
     private var role: String = ""
     private var status: String = ""
     private var workerId: Int = 0
+    private var lastResults: Map<String, Int> = emptyMap()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d("UR_CRASH", "onCreate — mulai inflate binding")
@@ -58,6 +69,7 @@ class UpdateResultActivity : AppCompatActivity() {
 
         Log.d("UR_DEBUG", "Intent data → detailId=$detailId, role=$role, status=$status, workerId=$workerId")
 
+        btnNextProcess(detailId)
         setupRecycler()
         observeArriveList()
         observeUpdateResult()
@@ -67,6 +79,7 @@ class UpdateResultActivity : AppCompatActivity() {
             role = role,
             workerId = workerId
         )
+        observeNextProcess()
     }
 
     private fun setupRecycler() {
@@ -74,6 +87,7 @@ class UpdateResultActivity : AppCompatActivity() {
 
             Log.d("UR_DEBUG", "CALLBACK from adapter → detail=$detail, processDate=$processDate, results=$results")
 
+            lastResults = results
             submitUpdateResult(detail, processDate, results)
         }
 
@@ -160,4 +174,88 @@ class UpdateResultActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun btnNextProcess(detailId: Int) {
+
+        // Observe NEXT ROLE
+        getNextRole.resultDataNextRole.observe(this) { roleResponse ->
+            roleResponse?.let { role ->
+                getWorkers.fetchDataWorkers(role.next_role.toString())
+            }
+        }
+
+        // Observe WORKERS
+        getWorkers.resultDataWorkers.observe(this) { workersResponse ->
+
+            val workerItems = workersResponse.workers?.map {
+                GetWorkers(it.id, it.name)
+            } ?: emptyList()
+
+            val sheet = NextRoleBottomSheetFragment.newInstance(
+                role = getNextRole.resultDataNextRole.value?.next_role ?: "",
+                workers = workerItems
+            )
+
+            sheet.show(supportFragmentManager, "chooseWorker")
+        }
+
+        binding.btnSubmit.setOnClickListener {
+
+            val totalFinished = lastResults.values.sum()
+
+            Log.d("NEXT_LOGIC", "lastResults=$lastResults | totalFinished=$totalFinished")
+
+            val nextRole = if (lastResults.isEmpty() || totalFinished == 0) {
+                "konveksi"
+            } else {
+                getNextRole.fetchData(detailId)
+                getNextRole.resultDataNextRole.value?.next_role ?: ""
+            }
+
+            Log.d("NEXT_LOGIC", "Next role based on PCS = $nextRole")
+
+            // Ambil worker untuk nextRole
+            getWorkers.fetchDataWorkers(nextRole)
+        }
+
+    }
+
+
+    override fun onWorkerSelected(workerId: Int) {
+        Log.d("NEXT_PROCESS", "Kirim nextProcess dengan PCS = $lastResults")
+
+        val data = NextProcess(
+            worker_id = workerId,
+            pcs_finished = lastResults
+        )
+
+        nextProcessViewModel.updateProcess(detailId, data)
+    }
+
+    private fun observeNextProcess() {
+        nextProcessViewModel.updateState.observe(this) { result ->
+
+            result.onSuccess {
+                Log.d("NEXT_PROCESS", "Next Process SUCCESS → ${it.message}")
+                Toast.makeText(this, "Berhasil lanjut ke proses berikutnya!", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    putExtra("GO_TO_TASK", true)
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+
+                startActivity(intent)
+                finish()
+
+
+            }
+
+            result.onFailure { err ->
+                Log.e("NEXT_PROCESS", "Next Process FAILED → ${err.message}")
+                Toast.makeText(this, "Gagal memproses: ${err.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 }

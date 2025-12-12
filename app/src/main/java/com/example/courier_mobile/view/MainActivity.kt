@@ -31,6 +31,14 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+
+        if (intent.getBooleanExtra("GO_TO_TASK", false)) {
+            // Pindah langsung ke TaskFragment
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.frame_container, TaskFragment())
+                .commit()
+        }
+
     }
 
     private fun loadFragment(fragment: Fragment){
@@ -38,4 +46,5 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.frame_container, fragment)
             .commit()
     }
+
 }

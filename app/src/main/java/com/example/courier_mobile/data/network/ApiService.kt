@@ -2,6 +2,10 @@ package com.example.courier_mobile.data.network
 import com.example.courier_mobile.data.model.ApiResponse
 import com.example.courier_mobile.data.model.GetDetailArrive
 import com.example.courier_mobile.data.model.GetDetailDelivery
+import com.example.courier_mobile.data.model.GetNextRole
+import com.example.courier_mobile.data.model.GetWorkers
+import com.example.courier_mobile.data.model.GetWorkersResponse
+import com.example.courier_mobile.data.model.NextProcess
 import com.example.courier_mobile.data.model.ResponseDelivery
 import com.example.courier_mobile.data.model.UpdateResult
 import com.example.courier_mobile.data.model.UpdateResultRequest
@@ -33,7 +37,6 @@ interface ApiService {
     ): Response<ResponseDelivery>
 
 
-
     @POST("material-details/{detail}/startDelivery")
     suspend fun startDelivery(
         @Path("detail") detailId: Int
@@ -49,5 +52,21 @@ interface ApiService {
         @Path("detail") detailId: Int,
         @Body body: UpdateResultRequest
     ): Response<ApiResponse>
+
+    @POST("material-details/{detail}/nextProcess")
+    suspend fun nextProcess(
+        @Path("detail") detailId: Int,
+        @Body body: NextProcess
+    ): Response<ApiResponse>
+
+    @GET("material-details/detail/{detail}")
+    suspend fun getNextRole(
+        @Path("detail") detailId: Int,
+    ): Response<GetNextRole>
+
+    @GET("material-details/workers/{role}")
+    suspend fun getWorkers(
+        @Path("role") role: String,
+    ): Response<GetWorkersResponse>
 
 }

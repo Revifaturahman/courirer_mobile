@@ -5,7 +5,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.courier_mobile.data.model.GetDetailArrive
 import com.example.courier_mobile.data.model.GetDetailDelivery
 import com.example.courier_mobile.repository.GetDetailRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,11 +12,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class GetDetailArriveViewModel @Inject constructor(
+class PostDetailDeliveryViewModel @Inject constructor(
     private val repository: GetDetailRepository
-): ViewModel() {
-    private val _resultData = MutableLiveData<GetDetailArrive>()
-    val resultData: LiveData<GetDetailArrive> get() = _resultData
+) : ViewModel() {
+
+    private val _resultData = MutableLiveData<GetDetailDelivery>()
+    val resultData: LiveData<GetDetailDelivery> get() = _resultData
 
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> get() = _errorMessage
@@ -25,12 +25,12 @@ class GetDetailArriveViewModel @Inject constructor(
     fun fetchData(detailId: Int) {
         viewModelScope.launch {
             try {
-                Log.d("GetDetailArrive", "Fetching detail for id=$detailId")
-                val data = repository.getDetailArrive(detailId)
-                Log.d("GetDetailArrive", "Success: $data")
+                Log.d("GetDetailVM", "Fetching detail for id=$detailId")
+                val data = repository.getDetailDelivery(detailId)
+                Log.d("GetDetailVM", "Success: $data")
                 _resultData.value = data
             } catch (e: Exception) {
-                Log.e("GetDetailArrive", "Error: ${e.message}")
+                Log.e("GetDetailVM", "Error: ${e.message}")
                 _errorMessage.value = e.message
             }
         }

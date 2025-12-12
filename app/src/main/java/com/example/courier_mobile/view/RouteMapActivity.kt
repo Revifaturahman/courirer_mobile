@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.webkit.WebView
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
@@ -24,7 +23,7 @@ import com.example.courier_mobile.utils.WebViewHelper
 import com.example.courier_mobile.utils.LocationTracker
 import com.example.courier_mobile.utils.MapHelper
 import com.example.courier_mobile.utils.Route
-import com.example.courier_mobile.viewmodel.GetDetailArriveViewModel
+import com.example.courier_mobile.viewmodel.PostDetailArriveViewModel
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -55,7 +54,7 @@ class RouteMapActivity : AppCompatActivity() {
     private val routeLatLngs = mutableListOf<LatLng>()
     private val mapHelper = MapHelper()
 
-    private val viewModel: GetDetailArriveViewModel by viewModels()
+    private val viewModel: PostDetailArriveViewModel by viewModels()
 
     private var destLat = 0.0
     private var destLng = 0.0
